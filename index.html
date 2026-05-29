@@ -229,8 +229,9 @@
             <textarea id="logs" placeholder="Paste Jenkins / Docker / Kubernetes / Helm logs here..."></textarea>
 
             <div class="toolbar">
-                <input id="buildNumber" placeholder="Jenkins build number">
+                <input id="buildNumber" placeholder="Build number">
                 <button onclick="analyzeLogs()">Analyze Logs</button>
+                <button class="secondary" onclick="loadBuildFromHistory()">Show RCA</button>
                 <button class="secondary" onclick="loadJenkinsError()">Jenkins</button>
                 <button class="secondary" onclick="loadKubernetesError()">Kubernetes</button>
                 <button class="secondary" onclick="loadHelmError()">Helm</button>
@@ -311,7 +312,15 @@
             const buildNumber = document.getElementById("buildNumber").value;
 
             if (!logs) {
-                alert("Please enter logs");
+                if (buildNumber) {
+                    const foundIncident = await loadIncidentByBuildNumber(buildNumber);
+
+                    if (foundIncident) {
+                        return;
+                    }
+                }
+
+                alert("Please enter logs or click an incident from history");
                 return;
             }
 
@@ -339,6 +348,46 @@
                 setResult("Error connecting to FastAPI backend");
             }
         }
+
+        async function loadIncidentByBuildNumber(buildNumber) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/incidents/build/${encodeURIComponent(buildNumber)}`);
+                const incident = await response.json();
+
+                if (!incident.found) {
+                    return false;
+                }
+
+                document.getElementById("logs").value = incident.logs;
+                document.getElementById("buildNumber").value = incident.build_number || "";
+                setResult(incident.analysis);
+
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function loadBuildFromHistory() {
+            const buildNumber = document.getElementById("buildNumber").value;
+
+            if (!buildNumber) {
+                alert("Enter a build number to show RCA");
+                return;
+            }
+
+            const foundIncident = await loadIncidentByBuildNumber(buildNumber);
+
+            if (!foundIncident) {
+                alert(`No incident found for build ${buildNumber}`);
+            }
+        }
+
+        document.getElementById("buildNumber").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                loadBuildFromHistory();
+            }
+        });
 
         async function loadIncidentHistory() {
             try {

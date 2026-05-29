@@ -244,3 +244,45 @@ def get_incidents():
     db.close()
 
     return jsonable_encoder(data)
+
+@app.get("/incidents/build/{build_number}")
+def get_incident_by_build_number(build_number: str):
+    db = SessionLocal()
+
+    incidents = (
+        db.query(Incident)
+        .filter(Incident.build_number == build_number)
+        .order_by(Incident.id.desc())
+        .all()
+    )
+
+    if not incidents:
+        db.close()
+        return {"found": False}
+
+    jenkins_marker = f"Running Jenkins build #{build_number}"
+
+    incident = next(
+        (
+            item
+            for item in incidents
+            if item.logs and (
+                jenkins_marker in item.logs
+                or "Stage: Setup Python On macOS" in item.logs
+                or "Stage: Run Build" in item.logs
+            )
+        ),
+        incidents[0]
+    )
+
+    data = {
+        "found": True,
+        "id": incident.id,
+        "build_number": incident.build_number,
+        "logs": incident.logs,
+        "analysis": incident.analysis,
+    }
+
+    db.close()
+
+    return jsonable_encoder(data)

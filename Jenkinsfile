@@ -3,17 +3,24 @@ pipeline {
 
     environment {
         RCA_BACKEND_URL = 'http://127.0.0.1:8000/analyze'
-        BUILD_LOG_FILE = 'build.log'
+        PIPELINE_LOG_FILE = 'pipeline.log'
+        PROJECT_DIR = '/Users/harishkumarr/Downloads/jenkins-ai-agent 2'
     }
 
     stages {
         stage('Setup Python On macOS') {
             steps {
                 sh '''#!/bin/bash
-                    python3 -m venv .venv
-                    . .venv/bin/activate
-                    python -m pip install --upgrade pip
-                    pip install -r requirements.txt
+                    set -o pipefail
+                    {
+                        echo "Running Jenkins build #${BUILD_NUMBER}"
+                        echo "Stage: Setup Python On macOS"
+                        cd "${PROJECT_DIR}"
+                        python3 -m venv .venv
+                        . .venv/bin/activate
+                        python -m pip install --upgrade pip
+                        pip install -r requirements.txt
+                    } 2>&1 | tee "${PROJECT_DIR}/${PIPELINE_LOG_FILE}"
                 '''
             }
         }
@@ -23,9 +30,10 @@ pipeline {
                 sh '''#!/bin/bash
                     set -o pipefail
                     {
-                        echo "Running Jenkins build #${BUILD_NUMBER}"
+                        echo "Stage: Run Build"
+                        cd "${PROJECT_DIR}"
                         .venv/bin/python -m py_compile main.py database.py models.py
-                    } 2>&1 | tee "${BUILD_LOG_FILE}"
+                    } 2>&1 | tee -a "${PROJECT_DIR}/${PIPELINE_LOG_FILE}"
                 '''
             }
         }
@@ -34,7 +42,7 @@ pipeline {
     post {
         unsuccessful {
             sh '''#!/bin/bash
-                if [ -f "${BUILD_LOG_FILE}" ]; then
+                if [ -f "${PROJECT_DIR}/${PIPELINE_LOG_FILE}" ]; then
                     python3 - <<'PY' || true
 import json
 import os
@@ -43,7 +51,8 @@ import urllib.request
 
 backend_url = os.environ.get("RCA_BACKEND_URL", "http://127.0.0.1:8000/analyze")
 build_number = os.environ.get("BUILD_NUMBER", "")
-log_file = os.environ.get("BUILD_LOG_FILE", "build.log")
+project_dir = os.environ.get("PROJECT_DIR", ".")
+log_file = os.path.join(project_dir, os.environ.get("PIPELINE_LOG_FILE", "pipeline.log"))
 
 with open(log_file, "r", encoding="utf-8", errors="replace") as file:
     logs = file.read()
@@ -67,7 +76,7 @@ except Exception as error:
     print(f"RCA backend alert failed: {error}")
 PY
                 else
-                    echo "No build log file found, skipping RCA alert."
+                    echo "No pipeline log file found, skipping RCA alert."
                 fi
             '''
         }
