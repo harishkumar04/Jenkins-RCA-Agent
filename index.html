@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI DevOps RCA Agent</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #172033;
+            margin: 0;
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 22px;
+            font-size: 30px;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #dfe5ef;
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 260px;
+            border: 1px solid #cfd7e6;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: Consolas, monospace;
+        }
+
+        input {
+            width: 230px;
+            border: 1px solid #cfd7e6;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #2563eb;
+            color: #ffffff;
+            border: 0;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.secondary {
+            background: #eef2ff;
+            color: #243b7a;
+        }
+
+        button:hover {
+            filter: brightness(0.95);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            border: 1px solid #dfe5ef;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .stat span {
+            display: block;
+            color: #637089;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .stat strong {
+            font-size: 24px;
+        }
+
+        .result {
+            border: 1px solid #dfe5ef;
+            border-left: 6px solid #9aa6ba;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 210px;
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            background: #ffffff;
+        }
+
+        .severity-high {
+            border-left-color: #dc2626;
+            background: #fff5f5;
+        }
+
+        .severity-medium {
+            border-left-color: #d97706;
+            background: #fffbeb;
+        }
+
+        .severity-low {
+            border-left-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .history {
+            display: grid;
+            gap: 10px;
+            max-height: 590px;
+            overflow: auto;
+        }
+
+        .incident {
+            border: 1px solid #dfe5ef;
+            border-left: 5px solid #9aa6ba;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .incident:hover {
+            border-color: #b8c4d8;
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #637089;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .badge-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .incident-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .incident-summary {
+            color: #4b5563;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 16px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>AI DevOps RCA Agent</h1>
+
+    <div class="layout">
+        <section class="panel">
+            <h2>Analyze Logs</h2>
+
+            <textarea id="logs" placeholder="Paste Jenkins / Docker / Kubernetes / Helm logs here..."></textarea>
+
+            <div class="toolbar">
+                <input id="buildNumber" placeholder="Jenkins build number">
+                <button onclick="analyzeLogs()">Analyze Logs</button>
+                <button class="secondary" onclick="loadJenkinsError()">Jenkins</button>
+                <button class="secondary" onclick="loadKubernetesError()">Kubernetes</button>
+                <button class="secondary" onclick="loadHelmError()">Helm</button>
+                <button class="secondary" onclick="loadDockerError()">Docker</button>
+                <button class="secondary" onclick="loadGitError()">Git</button>
+            </div>
+
+            <h2 style="margin-top: 24px;">AI RCA Output</h2>
+            <div id="result" class="result"></div>
+        </section>
+
+        <aside>
+            <div class="stats">
+                <div class="stat">
+                    <span>Total</span>
+                    <strong id="totalCount">0</strong>
+                </div>
+                <div class="stat">
+                    <span>High</span>
+                    <strong id="highCount">0</strong>
+                </div>
+                <div class="stat">
+                    <span>Medium</span>
+                    <strong id="mediumCount">0</strong>
+                </div>
+            </div>
+
+            <section class="panel">
+                <h2>Incident History</h2>
+                <div id="history" class="history"></div>
+            </section>
+        </aside>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:8000";
+
+        function parseField(text, fieldName) {
+            const regex = new RegExp(`${fieldName}:\\s*([\\s\\S]*?)(?=\\n[A-Za-z ]+:|$)`, "i");
+            const match = text.match(regex);
+            return match ? match[1].trim() : "";
+        }
+
+        function getSeverity(text) {
+            const severity = parseField(text, "Severity").toLowerCase();
+
+            if (severity.includes("high")) {
+                return "high";
+            }
+
+            if (severity.includes("medium")) {
+                return "medium";
+            }
+
+            if (severity.includes("low")) {
+                return "low";
+            }
+
+            return "unknown";
+        }
+
+        function applySeverityClass(element, severity) {
+            element.classList.remove("severity-high", "severity-medium", "severity-low");
+
+            if (severity !== "unknown") {
+                element.classList.add(`severity-${severity}`);
+            }
+        }
+
+        function setResult(text) {
+            const result = document.getElementById("result");
+            result.innerText = text;
+            applySeverityClass(result, getSeverity(text));
+        }
+
+        async function analyzeLogs() {
+            const logs = document.getElementById("logs").value;
+            const buildNumber = document.getElementById("buildNumber").value;
+
+            if (!logs) {
+                alert("Please enter logs");
+                return;
+            }
+
+            setResult("Generating AI RCA...");
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/analyze`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            logs: logs,
+                            build_number: buildNumber
+                        })
+                    }
+                );
+
+                const data = await response.text();
+                setResult(data);
+                loadIncidentHistory();
+            } catch (error) {
+                setResult("Error connecting to FastAPI backend");
+            }
+        }
+
+        async function loadIncidentHistory() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/incidents`);
+                const incidents = await response.json();
+
+                renderStats(incidents);
+                renderHistory(incidents);
+            } catch (error) {
+                document.getElementById("history").innerText = "Unable to load incidents";
+            }
+        }
+
+        function renderStats(incidents) {
+            const high = incidents.filter((incident) => getSeverity(incident.analysis) === "high").length;
+            const medium = incidents.filter((incident) => getSeverity(incident.analysis) === "medium").length;
+
+            document.getElementById("totalCount").innerText = incidents.length;
+            document.getElementById("highCount").innerText = high;
+            document.getElementById("mediumCount").innerText = medium;
+        }
+
+        function renderHistory(incidents) {
+            const history = document.getElementById("history");
+            history.innerHTML = "";
+
+            if (!incidents.length) {
+                history.innerText = "No incidents yet";
+                return;
+            }
+
+            incidents.forEach((incident) => {
+                const severity = getSeverity(incident.analysis);
+                const category = parseField(incident.analysis, "Category") || "Uncategorized";
+                const failureType = parseField(incident.analysis, "Failure Type") || "Unknown failure";
+                const rootCause = parseField(incident.analysis, "Root Cause") || incident.logs.slice(0, 110);
+
+                const item = document.createElement("div");
+                item.className = "incident";
+                applySeverityClass(item, severity);
+                item.innerHTML = `
+                    <div class="incident-header">
+                        <span>#${incident.id} ${incident.build_number ? `Build ${incident.build_number}` : "Manual"}</span>
+                        <span class="badge badge-${severity}">${severity.toUpperCase()}</span>
+                    </div>
+                    <div class="incident-title">${category} - ${failureType}</div>
+                    <div class="incident-summary">${rootCause}</div>
+                `;
+
+                item.onclick = () => {
+                    document.getElementById("logs").value = incident.logs;
+                    document.getElementById("buildNumber").value = incident.build_number || "";
+                    setResult(incident.analysis);
+                };
+
+                history.appendChild(item);
+            });
+        }
+
+        function loadJenkinsError() {
+            document.getElementById("logs").value =
+`Started by user admin
+
+ERROR: Failed to clone repository
+
+Permission denied (publickey)
+
+fatal: Could not read from remote repository.`;
+        }
+
+        function loadKubernetesError() {
+            document.getElementById("logs").value =
+`Back-off restarting failed container
+
+CrashLoopBackOff
+
+OOMKilled`;
+        }
+
+        function loadHelmError() {
+            document.getElementById("logs").value =
+`Error: INSTALLATION FAILED: rendered manifests contain a resource that already exists.
+
+Unable to continue with install: ServiceAccount "api-sa" in namespace "prod" exists and cannot be imported into the current release.`;
+        }
+
+        function loadDockerError() {
+            document.getElementById("logs").value =
+`unable to prepare context:
+unable to evaluate symlinks in Dockerfile path:
+lstat /var/lib/jenkins/workspace/app/Dockerfile:
+no such file or directory`;
+        }
+
+        function loadGitError() {
+            document.getElementById("logs").value =
+`ERROR: Failed to clone repository
+
+Permission denied (publickey)
+
+fatal: Could not read from remote repository.`;
+        }
+
+        loadIncidentHistory();
+    </script>
+</body>
+
+</html>
