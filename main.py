@@ -105,6 +105,7 @@ def build_fingerprint(category: str, failure_type: str) -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
 
 def extract_base_job_url(build_url: str | None) -> str | None:
+    """Extract the base job URL from a build URL like http://jenkins/job/my-job/123/."""
     if not build_url:
         return None
 
