@@ -4,7 +4,7 @@ pipeline {
     environment {
         RCA_BACKEND_URL = 'http://127.0.0.1:8000/analyze'
         PIPELINE_LOG_FILE = 'pipeline.log'
-        PROJECT_DIR = '/Users/harishkumarr/Downloads/jenkins-ai-agent 2/jenkins-ai-agent-value-edition'
+        PROJECT_DIR = '/Users/harishkumarr/Downloads/jenkins-ai-agent 2'
         NODE_PROJECT_DIR = '/Users/harishkumarr/Desktop/justo-sample-app/node-postgres-app'
         NODE_APP_DIR = '/Users/harishkumarr/Desktop/justo-sample-app/node-postgres-app/app'
         DOCKER_IMAGE = 'harishkumar09/node-postgres-app-app'

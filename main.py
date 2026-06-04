@@ -104,6 +104,20 @@ def build_fingerprint(category: str, failure_type: str) -> str:
     ])
     return hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
 
+def extract_base_job_url(build_url: str | None) -> str | None:
+    if not build_url:
+        return None
+
+    prefix, separator, remainder = build_url.rpartition("/job/")
+    if not separator:
+        return None
+
+    job_name, slash, _ = remainder.partition("/")
+    if not slash:
+        return None
+
+    return f"{prefix}/job/{job_name}/"
+
 def build_recurrence_memory(previous_incidents: list[Incident], current_build_url: str | None = None) -> str:
     if not previous_incidents:
         return "No previous matching incidents found."
@@ -111,18 +125,13 @@ def build_recurrence_memory(previous_incidents: list[Incident], current_build_ur
     latest = previous_incidents[0]
     
     # Try to find a base build URL to reconstruct missing ones
-    base_url = None
-    if current_build_url:
-        match = re.match(r"(.*\/job\/[^\/]+\/)\d+\/?", current_build_url)
-        if match:
-            base_url = match.group(1)
+    base_url = extract_base_job_url(current_build_url)
             
     if not base_url:
         for p in previous_incidents:
             if p.build_url:
-                match = re.match(r"(.*\/job\/[^\/]+\/)\d+\/?", p.build_url)
-                if match:
-                    base_url = match.group(1)
+                base_url = extract_base_job_url(p.build_url)
+                if base_url:
                     break
     
     build_lines = []
