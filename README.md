@@ -49,6 +49,9 @@ The moment a build fails, the agent:
 
 ## Architecture
 
+<img width="849" height="649" alt="Screenshot 2026-06-04 at 10 11 11 AM" src="https://github.com/user-attachments/assets/2006637a-bcf5-47c3-9bfa-7590f7227eef" />
+
+
 ```
 Jenkins Pipeline (Jenkinsfile)
         │
@@ -67,6 +70,9 @@ FastAPI Backend (main.py)
                 ▼
         Browser Dashboard (index.html)
 ```
+
+<img width="1433" height="800" alt="Screenshot 2026-06-04 at 10 15 25 AM" src="https://github.com/user-attachments/assets/a782f74d-73e7-4b23-a6e4-042034492fca" />
+
 
 ---
 
