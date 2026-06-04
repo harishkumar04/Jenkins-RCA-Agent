@@ -113,7 +113,7 @@ def extract_base_job_url(build_url: str | None) -> str | None:
         return None
 
     job_name, slash, _ = remainder.partition("/")
-    if not slash:
+    if not slash or not job_name:
         return None
 
     return f"{prefix}/job/{job_name}/"
@@ -461,7 +461,7 @@ Read-only application code context:
         print("ERROR:", str(e))
 
         return PlainTextResponse(
-            content=f"Error occurred: {str(e)}",
+            content="Error occurred.",
             status_code=500
         )
 

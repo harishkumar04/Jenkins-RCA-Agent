@@ -1,5 +1,5 @@
 from sqlalchemy import Column, DateTime, Integer, String
-from datetime import datetime
+from datetime import datetime, timezone
 from database import Base
 
 class Incident(Base):
@@ -8,7 +8,7 @@ class Incident(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     build_number = Column(String, nullable=True)
 
