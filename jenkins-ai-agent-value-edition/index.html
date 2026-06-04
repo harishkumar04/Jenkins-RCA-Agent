@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI DevOps RCA Agent - Value Edition</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #172033;
+            margin: 0;
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 22px;
+            font-size: 30px;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #dfe5ef;
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 260px;
+            border: 1px solid #cfd7e6;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: Consolas, monospace;
+        }
+
+        input {
+            width: 230px;
+            border: 1px solid #cfd7e6;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #2563eb;
+            color: #ffffff;
+            border: 0;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.secondary {
+            background: #eef2ff;
+            color: #243b7a;
+        }
+
+        button:hover {
+            filter: brightness(0.95);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            border: 1px solid #dfe5ef;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .stat span {
+            display: block;
+            color: #637089;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .stat strong {
+            font-size: 24px;
+        }
+
+        .result {
+            border: 1px solid #dfe5ef;
+            border-left: 6px solid #9aa6ba;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 210px;
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            background: #ffffff;
+        }
+
+        .severity-high {
+            border-left-color: #dc2626;
+            background: #fff5f5;
+        }
+
+        .severity-medium {
+            border-left-color: #d97706;
+            background: #fffbeb;
+        }
+
+        .severity-low {
+            border-left-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .history {
+            display: grid;
+            gap: 10px;
+            max-height: 590px;
+            overflow: auto;
+        }
+
+        .incident {
+            border: 1px solid #dfe5ef;
+            border-left: 5px solid #9aa6ba;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .incident:hover {
+            border-color: #b8c4d8;
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #637089;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .badge-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .incident-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .incident-summary {
+            color: #4b5563;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #4b5563;
+        }
+
+        .meta-grid strong {
+            display: block;
+            color: #172033;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .insights {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .insight-row {
+            border: 1px solid #dfe5ef;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #ffffff;
+            font-size: 13px;
+        }
+
+        .insight-row span {
+            color: #637089;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 16px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>AI DevOps RCA Agent - Value Edition</h1>
+
+    <div class="layout">
+        <section class="panel">
+            <h2>Analyze Logs</h2>
+
+            <textarea id="logs" placeholder="Paste Jenkins / Docker / Kubernetes / Helm logs here..."></textarea>
+
+            <div class="toolbar">
+                <input id="buildNumber" placeholder="Build number">
+                <button onclick="analyzeLogs()">Analyze Logs</button>
+                <button class="secondary" onclick="loadBuildFromHistory()">Show RCA</button>
+                <button class="secondary" onclick="loadJenkinsError()">Jenkins</button>
+                <button class="secondary" onclick="loadKubernetesError()">Kubernetes</button>
+                <button class="secondary" onclick="loadHelmError()">Helm</button>
+                <button class="secondary" onclick="loadDockerError()">Docker</button>
+                <button class="secondary" onclick="loadGitError()">Git</button>
+            </div>
+
+            <h2 style="margin-top: 24px;">AI RCA Output</h2>
+            <div id="result" class="result"></div>
+        </section>
+
+        <aside>
+            <div class="stats">
+                <div class="stat">
+                    <span>Total</span>
+                    <strong id="totalCount">0</strong>
+                </div>
+                <div class="stat">
+                    <span>High</span>
+                    <strong id="highCount">0</strong>
+                </div>
+                <div class="stat">
+                    <span>Medium</span>
+                    <strong id="mediumCount">0</strong>
+                </div>
+                <div class="stat">
+                    <span>Recurring</span>
+                    <strong id="recurringCount">0</strong>
+                </div>
+            </div>
+
+            <section class="panel">
+                <h2>Operational Insights</h2>
+                <div id="insights" class="insights"></div>
+
+                <h2>Incident History</h2>
+                <div id="history" class="history"></div>
+            </section>
+        </aside>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:8000";
+
+        function parseField(text, fieldName) {
+            const regex = new RegExp(`${fieldName}:\\s*([\\s\\S]*?)(?=\\n[A-Za-z ]+:|$)`, "i");
+            const match = text.match(regex);
+            return match ? match[1].trim() : "";
+        }
+
+        function getSeverity(text) {
+            const severity = parseField(text, "Severity").toLowerCase();
+
+            if (severity.includes("high")) {
+                return "high";
+            }
+
+            if (severity.includes("medium")) {
+                return "medium";
+            }
+
+            if (severity.includes("low")) {
+                return "low";
+            }
+
+            return "unknown";
+        }
+
+        function applySeverityClass(element, severity) {
+            element.classList.remove("severity-high", "severity-medium", "severity-low");
+
+            if (severity !== "unknown") {
+                element.classList.add(`severity-${severity}`);
+            }
+        }
+
+        function setResult(text) {
+            const result = document.getElementById("result");
+            result.innerText = text;
+            applySeverityClass(result, getSeverity(text));
+        }
+
+        async function analyzeLogs() {
+            const logs = document.getElementById("logs").value;
+            const buildNumber = document.getElementById("buildNumber").value;
+
+            if (!logs) {
+                if (buildNumber) {
+                    const foundIncident = await loadIncidentByBuildNumber(buildNumber);
+
+                    if (foundIncident) {
+                        return;
+                    }
+                }
+
+                alert("Please enter logs or click an incident from history");
+                return;
+            }
+
+            setResult("Generating AI RCA...");
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/analyze`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            logs: logs,
+                            build_number: buildNumber
+                        })
+                    }
+                );
+
+                const data = await response.text();
+                setResult(data);
+                loadIncidentHistory();
+                loadInsights();
+            } catch (error) {
+                setResult("Error connecting to FastAPI backend");
+            }
+        }
+
+        async function loadIncidentByBuildNumber(buildNumber) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/incidents/build/${encodeURIComponent(buildNumber)}`);
+                const incident = await response.json();
+
+                if (!incident.found) {
+                    return false;
+                }
+
+                document.getElementById("logs").value = incident.logs;
+                document.getElementById("buildNumber").value = incident.build_number || "";
+                setResult(incident.analysis);
+
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function loadBuildFromHistory() {
+            const buildNumber = document.getElementById("buildNumber").value;
+
+            if (!buildNumber) {
+                alert("Enter a build number to show RCA");
+                return;
+            }
+
+            const foundIncident = await loadIncidentByBuildNumber(buildNumber);
+
+            if (!foundIncident) {
+                alert(`No incident found for build ${buildNumber}`);
+            }
+        }
+
+        document.getElementById("buildNumber").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                loadBuildFromHistory();
+            }
+        });
+
+        async function loadIncidentHistory() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/incidents`);
+                const incidents = await response.json();
+
+                renderStats(incidents);
+                renderHistory(incidents);
+                loadInsights();
+            } catch (error) {
+                document.getElementById("history").innerText = "Unable to load incidents";
+            }
+        }
+
+        function renderStats(incidents) {
+            const high = incidents.filter((incident) => getIncidentSeverity(incident) === "high").length;
+            const medium = incidents.filter((incident) => getIncidentSeverity(incident) === "medium").length;
+            const recurring = incidents.filter((incident) => incident.recurring === "Yes" || Number(incident.recurrence_count || 1) > 1).length;
+
+            document.getElementById("totalCount").innerText = incidents.length;
+            document.getElementById("highCount").innerText = high;
+            document.getElementById("mediumCount").innerText = medium;
+            document.getElementById("recurringCount").innerText = recurring;
+        }
+
+        async function loadInsights() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/insights`);
+                const insights = await response.json();
+                renderInsights(insights);
+            } catch (error) {
+                document.getElementById("insights").innerText = "Insights unavailable";
+            }
+        }
+
+        function renderInsights(insights) {
+            const target = document.getElementById("insights");
+            const topCategory = topEntry(insights.by_category);
+            const recurringCount = (insights.recurring || []).length;
+
+            target.innerHTML = `
+                <div class="insight-row"><span>Top failure category</span><strong>${topCategory}</strong></div>
+                <div class="insight-row"><span>Recurring patterns</span><strong>${recurringCount}</strong></div>
+            `;
+        }
+
+        function topEntry(values) {
+            const entries = Object.entries(values || {});
+
+            if (!entries.length) {
+                return "No data";
+            }
+
+            entries.sort((first, second) => second[1] - first[1]);
+            return `${entries[0][0]} (${entries[0][1]})`;
+        }
+
+        function getIncidentSeverity(incident) {
+            return (incident.severity || parseField(incident.analysis, "Severity") || "unknown").toLowerCase();
+        }
+
+        function renderHistory(incidents) {
+            const history = document.getElementById("history");
+            history.innerHTML = "";
+
+            if (!incidents.length) {
+                history.innerText = "No incidents yet";
+                return;
+            }
+
+            incidents.forEach((incident) => {
+                const severity = getIncidentSeverity(incident);
+                const category = incident.category || parseField(incident.analysis, "Category") || "Uncategorized";
+                const failureType = incident.failure_type || parseField(incident.analysis, "Failure Type") || "Unknown failure";
+                const rootCause = incident.root_cause || parseField(incident.analysis, "Root Cause") || incident.logs.slice(0, 110);
+                const recurring = incident.recurring || parseField(incident.analysis, "Recurring Incident") || "No";
+                const count = incident.recurrence_count || parseField(incident.analysis, "Similar Incident Count") || "1";
+                const recurrenceMemory = incident.recurrence_memory || parseField(incident.analysis, "Recurrence Memory") || "No previous matching incidents found.";
+                const resolutionPlaybook = incident.resolution_playbook || parseField(incident.analysis, "Resolution Playbook") || "No playbook generated.";
+                const buildUrl = incident.build_url || parseField(incident.analysis, "Build URL") || "";
+
+                const item = document.createElement("div");
+                item.className = "incident";
+                applySeverityClass(item, severity);
+                item.innerHTML = `
+                    <div class="incident-header">
+                        <span>#${incident.id} ${incident.build_number ? `Build ${incident.build_number}` : "Manual"}</span>
+                        <span class="badge badge-${severity}">${severity.toUpperCase()}</span>
+                    </div>
+                    <div class="incident-title">${category} - ${failureType}</div>
+                    <div class="incident-summary">${rootCause}</div>
+                    <div class="meta-grid">
+                        <div style="grid-column: 1 / -1;">Recurring<strong>${recurring} (${count})</strong></div>
+                        <div style="grid-column: 1 / -1;">Build URL<strong>${buildUrl ? `<a href="${buildUrl}" target="_blank">${buildUrl}</a>` : "Not provided"}</strong></div>
+                        <div style="grid-column: 1 / -1;">Memory<strong>${recurrenceMemory.replace(/\n/g, '<br>')}</strong></div>
+                        <div style="grid-column: 1 / -1;">Resolution Playbook<strong>${resolutionPlaybook.replace(/\n/g, '<br>')}</strong></div>
+                    </div>
+                `;
+
+                item.onclick = () => {
+                    document.getElementById("logs").value = incident.logs;
+                    document.getElementById("buildNumber").value = incident.build_number || "";
+                    setResult(incident.analysis);
+                };
+
+                history.appendChild(item);
+            });
+        }
+
+        function loadJenkinsError() {
+            document.getElementById("logs").value =
+`Started by user admin
+
+ERROR: Failed to clone repository
+
+Permission denied (publickey)
+
+fatal: Could not read from remote repository.`;
+        }
+
+        function loadKubernetesError() {
+            document.getElementById("logs").value =
+`Back-off restarting failed container
+
+CrashLoopBackOff
+
+OOMKilled`;
+        }
+
+        function loadHelmError() {
+            document.getElementById("logs").value =
+`Error: INSTALLATION FAILED: rendered manifests contain a resource that already exists.
+
+Unable to continue with install: ServiceAccount "api-sa" in namespace "prod" exists and cannot be imported into the current release.`;
+        }
+
+        function loadDockerError() {
+            document.getElementById("logs").value =
+`unable to prepare context:
+unable to evaluate symlinks in Dockerfile path:
+lstat /var/lib/jenkins/workspace/app/Dockerfile:
+no such file or directory`;
+        }
+
+        function loadGitError() {
+            document.getElementById("logs").value =
+`ERROR: Failed to clone repository
+
+Permission denied (publickey)
+
+fatal: Could not read from remote repository.`;
+        }
+
+        loadIncidentHistory();
+        loadInsights();
+    </script>
+</body>
+
+</html>
