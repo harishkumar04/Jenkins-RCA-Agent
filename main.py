@@ -112,8 +112,12 @@ def extract_base_job_url(build_url: str | None) -> str | None:
     if not separator:
         return None
 
-    job_name, slash, _ = remainder.partition("/")
+    job_name, slash, remainder = remainder.partition("/")
     if not slash or not job_name:
+        return None
+
+    build_number, _, _ = remainder.partition("/")
+    if not build_number.isdigit():
         return None
 
     return f"{prefix}/job/{job_name}/"
