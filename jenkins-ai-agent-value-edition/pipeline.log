@@ -1,5 +1,5 @@
-Running Jenkins build #6
-Stage: Setup RCA Agent Dependencies
+Running Jenkins build #46
+@@RCA_STAGE_START@@ Setup RCA Agent Dependencies
 Requirement already satisfied: pip in ./.venv/lib/python3.14/site-packages (26.1.2)
 Requirement already satisfied: fastapi in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 1)) (0.136.3)
 Requirement already satisfied: uvicorn in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 2)) (0.48.0)
@@ -24,8 +24,10 @@ Requirement already satisfied: tqdm>4 in ./.venv/lib/python3.14/site-packages (f
 Requirement already satisfied: idna>=2.8 in ./.venv/lib/python3.14/site-packages (from anyio<5,>=3.5.0->openai->-r requirements.txt (line 5)) (3.17)
 Requirement already satisfied: certifi in ./.venv/lib/python3.14/site-packages (from httpx<1,>=0.23.0->openai->-r requirements.txt (line 5)) (2026.5.20)
 Requirement already satisfied: httpcore==1.* in ./.venv/lib/python3.14/site-packages (from httpx<1,>=0.23.0->openai->-r requirements.txt (line 5)) (1.0.9)
-Stage: Validate RCA Backend Code
-Stage: Install Node App Dependencies
+@@RCA_STAGE_END@@ Setup RCA Agent Dependencies
+@@RCA_STAGE_START@@ Validate RCA Backend Code
+@@RCA_STAGE_END@@ Validate RCA Backend Code
+@@RCA_STAGE_START@@ Install Node App Dependencies
 /Users/harishkumarr/.nvm/versions/node/v22.17.0/bin/node
 /Users/harishkumarr/.nvm/versions/node/v22.17.0/bin/npm
 v22.17.0
@@ -38,10 +40,10 @@ drwxr-xr-x   7 harishkumarr  staff    224 May 29 15:09 ..
 -rw-r--r--   1 harishkumarr  staff    299 Apr 15 17:17 db.js
 -rw-r--r--   1 harishkumarr  staff    703 Apr 15 17:18 index.js
 drwxr-xr-x  83 harishkumarr  staff   2656 May 29 12:04 node_modules
--rw-r--r--@  1 harishkumarr  staff  34766 Jun  1 12:46 package-lock.json
+-rw-r--r--@  1 harishkumarr  staff  34766 Jun  3 15:30 package-lock.json
 -rw-r--r--@  1 harishkumarr  staff    364 May 29 12:05 package.json
 
-up to date, audited 81 packages in 1s
+up to date, audited 81 packages in 899ms
 
 23 packages are looking for funding
   run `npm fund` for details
@@ -52,13 +54,15 @@ To address all issues, run:
   npm audit fix
 
 Run `npm audit` for details.
-Stage: Test Node App
+@@RCA_STAGE_END@@ Install Node App Dependencies
+@@RCA_STAGE_START@@ Test Node App
 /Users/harishkumarr/.nvm/versions/node/v22.17.0/bin/npm
 
 > app@1.0.0 test
 > echo "Error: no test specified" && exit 0
 
 Error: no test specified
-Stage: Build Docker Image
+@@RCA_STAGE_END@@ Test Node App
+@@RCA_STAGE_START@@ Build Docker Image
 /opt/homebrew/bin/docker
 ERROR: Error response from daemon: Docker Desktop is manually paused. Unpause it through the Whale menu or Dashboard.

@@ -47,6 +47,7 @@ def ensure_database_columns():
         "recurrence_count": "INTEGER DEFAULT 1",
         "recurring": "VARCHAR DEFAULT 'No'",
         "recurrence_memory": "VARCHAR",
+        "resolution_playbook": "VARCHAR",
         "code_context": "VARCHAR",
     }
 
@@ -103,29 +104,54 @@ def build_fingerprint(category: str, failure_type: str) -> str:
     ])
     return hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
 
-def build_recurrence_memory(previous_incidents: list[Incident]) -> str:
+def build_recurrence_memory(previous_incidents: list[Incident], current_build_url: str | None = None) -> str:
     if not previous_incidents:
         return "No previous matching incidents found."
 
     latest = previous_incidents[0]
     
-    previous_builds = []
+    # Try to find a base build URL to reconstruct missing ones
+    base_url = None
+    if current_build_url:
+        match = re.match(r"(.*\/job\/[^\/]+\/)\d+\/?", current_build_url)
+        if match:
+            base_url = match.group(1)
+            
+    if not base_url:
+        for p in previous_incidents:
+            if p.build_url:
+                match = re.match(r"(.*\/job\/[^\/]+\/)\d+\/?", p.build_url)
+                if match:
+                    base_url = match.group(1)
+                    break
+    
+    build_lines = []
     for incident in previous_incidents[:5]:
+        build_url = incident.build_url
+        if not build_url and incident.build_number and base_url:
+            build_url = f"{base_url}{incident.build_number}/"
+        
         build_str = f"Build {incident.build_number or 'N/A'}"
-        if incident.build_url:
-            build_str += f" ({incident.build_url})"
-        previous_builds.append(build_str)
+        if build_url:
+            build_str += f" ({build_url})"
+        build_lines.append(f"  - {build_str}")
 
     previous_fix = parse_field(latest.analysis, "Suggested Fix") or "No previous fix captured."
 
-    memory_text = f"Matched previous incidents: {', '.join(previous_builds)}."
-    if latest.build_number:
-        last_seen_str = f" Last seen in Build {latest.build_number}"
-        if latest.build_url:
-            last_seen_str += f" ({latest.build_url})"
-        memory_text += last_seen_str + "."
+    last_seen_url = latest.build_url
+    if not last_seen_url and latest.build_number and base_url:
+        last_seen_url = f"{base_url}{latest.build_number}/"
 
-    memory_text += f" Previous fix/action: {previous_fix}"
+    last_seen_str = f"Build {latest.build_number or 'N/A'}"
+    if last_seen_url:
+        last_seen_str += f" ({last_seen_url})"
+
+    memory_text = (
+        "Matched previous incidents:\n"
+        + "\n".join(build_lines) + "\n"
+        + f"Last seen in: {last_seen_str}\n"
+        + f"Previous fix/action: {previous_fix}"
+    )
     return memory_text
 
 def get_read_only_code_context() -> str:
@@ -217,6 +243,7 @@ def incident_to_dict(incident: Incident) -> dict:
         "recurrence_count": incident.recurrence_count,
         "recurring": incident.recurring,
         "recurrence_memory": incident.recurrence_memory,
+        "resolution_playbook": incident.resolution_playbook,
         "code_context": incident.code_context,
         "logs": incident.logs,
         "analysis": incident.analysis,
@@ -294,6 +321,9 @@ Severity:
 Suggested Fix:
 <short fix>
 
+Resolution Playbook:
+<step-by-step numbered steps to completely resolve the issue, formatted as 'Step 1: ... Step 2: ...'>
+
 Troubleshooting Commands:
 <commands only>
 
@@ -343,6 +373,7 @@ Read-only application code context:
         severity = parse_field(analysis, "Severity") or "Medium"
         failure_type = parse_field(analysis, "Failure Type") or "Unknown"
         root_cause = parse_field(analysis, "Root Cause") or "Unknown"
+        resolution_playbook = parse_field(analysis, "Resolution Playbook") or "No resolution playbook generated."
         fingerprint = build_fingerprint(category, failure_type)
         db = SessionLocal()
         previous_incidents = (
@@ -358,7 +389,7 @@ Read-only application code context:
             .filter(Incident.fingerprint == fingerprint)
             .count()
         ) + 1
-        recurrence_memory = build_recurrence_memory(previous_incidents)
+        recurrence_memory = build_recurrence_memory(previous_incidents, current_build_url=request.build_url)
 
         analysis = enrich_analysis(
             analysis=analysis,
@@ -381,6 +412,7 @@ Read-only application code context:
             recurrence_count=recurrence_count,
             recurring="Yes" if recurrence_count > 1 else "No",
             recurrence_memory=recurrence_memory,
+            resolution_playbook=resolution_playbook,
             code_context=code_context,
             logs=request.logs,
             analysis=analysis,

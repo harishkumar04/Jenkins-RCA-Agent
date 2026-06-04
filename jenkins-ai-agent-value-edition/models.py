@@ -30,6 +30,8 @@ class Incident(Base):
 
     recurrence_memory = Column(String, nullable=True)
 
+    resolution_playbook = Column(String, nullable=True)
+
     code_context = Column(String, nullable=True)
 
     logs = Column(String)

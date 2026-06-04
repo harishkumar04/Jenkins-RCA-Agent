@@ -308,7 +308,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = "http://127.0.0.1:8001";
+        const API_BASE_URL = "http://127.0.0.1:8000";
 
         function parseField(text, fieldName) {
             const regex = new RegExp(`${fieldName}:\\s*([\\s\\S]*?)(?=\\n[A-Za-z ]+:|$)`, "i");
@@ -508,6 +508,7 @@
                 const recurring = incident.recurring || parseField(incident.analysis, "Recurring Incident") || "No";
                 const count = incident.recurrence_count || parseField(incident.analysis, "Similar Incident Count") || "1";
                 const recurrenceMemory = incident.recurrence_memory || parseField(incident.analysis, "Recurrence Memory") || "No previous matching incidents found.";
+                const resolutionPlaybook = incident.resolution_playbook || parseField(incident.analysis, "Resolution Playbook") || "No playbook generated.";
                 const buildUrl = incident.build_url || parseField(incident.analysis, "Build URL") || "";
 
                 const item = document.createElement("div");
@@ -523,7 +524,8 @@
                     <div class="meta-grid">
                         <div style="grid-column: 1 / -1;">Recurring<strong>${recurring} (${count})</strong></div>
                         <div style="grid-column: 1 / -1;">Build URL<strong>${buildUrl ? `<a href="${buildUrl}" target="_blank">${buildUrl}</a>` : "Not provided"}</strong></div>
-                        <div style="grid-column: 1 / -1;">Memory<strong>${recurrenceMemory}</strong></div>
+                        <div style="grid-column: 1 / -1;">Memory<strong>${recurrenceMemory.replace(/\n/g, '<br>')}</strong></div>
+                        <div style="grid-column: 1 / -1;">Resolution Playbook<strong>${resolutionPlaybook.replace(/\n/g, '<br>')}</strong></div>
                     </div>
                 `;
 

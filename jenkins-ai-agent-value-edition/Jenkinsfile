@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        RCA_BACKEND_URL = 'http://127.0.0.1:8001/analyze'
+        RCA_BACKEND_URL = 'http://127.0.0.1:8000/analyze'
         PIPELINE_LOG_FILE = 'pipeline.log'
         PROJECT_DIR = '/Users/harishkumarr/Downloads/jenkins-ai-agent 2/jenkins-ai-agent-value-edition'
         NODE_PROJECT_DIR = '/Users/harishkumarr/Desktop/justo-sample-app/node-postgres-app'
@@ -128,8 +128,9 @@ import os
 import re
 import urllib.request
 
-backend_url = os.environ.get("RCA_BACKEND_URL", "http://127.0.0.1:8001/analyze")
+backend_url = os.environ.get("RCA_BACKEND_URL", "http://127.0.0.1:8000/analyze")
 build_number = os.environ.get("BUILD_NUMBER", "")
+build_url = os.environ.get("BUILD_URL", "")
 project_dir = os.environ.get("PROJECT_DIR", ".")
 log_file = os.path.join(project_dir, os.environ.get("PIPELINE_LOG_FILE", "pipeline.log"))
 
@@ -138,8 +139,8 @@ with open(log_file, "r", encoding="utf-8", errors="replace") as file:
 
 lines = full_logs.splitlines()
 
-stage_start_pattern = re.compile(r"@@RCA_STAGE_START@@\s*(.+)")
-stage_end_pattern = re.compile(r"@@RCA_STAGE_END@@\s*(.+)")
+stage_start_pattern = re.compile(r"@@RCA_STAGE_START@@\\s*(.+)")
+stage_end_pattern = re.compile(r"@@RCA_STAGE_END@@\\s*(.+)")
 
 current_stage = None
 stage_lines = {}
@@ -165,13 +166,20 @@ for line in lines:
             current_stage = None
 
 failed_stage = current_stage or stage_order[-1] if stage_order else "Unknown"
-focused_logs = "\n".join(stage_lines.get(failed_stage, lines[-200:]))
+
+if failed_stage == "Unknown":
+    syntax_errors = [r"MultipleCompilationErrorsException", r"WorkflowScript", r"unexpected char", r"unexpected token"]
+    if any(any(re.search(p, l, re.IGNORECASE) for p in syntax_errors) for l in lines[-200:]):
+        failed_stage = "Pipeline Syntax Error"
+
+focused_logs = "\\n".join(stage_lines.get(failed_stage, lines[-200:]))
 
 payload = json.dumps({
     "build_number": build_number,
+    "build_url": build_url,
     "logs": (
-        f"Detected Failed Stage: {failed_stage}\n\n"
-        f"Focused Failed Stage Logs:\n{focused_logs}"
+        f"Detected Failed Stage: {failed_stage}\\n\\n"
+        f"Focused Failed Stage Logs:\\n{focused_logs}"
     )
 }).encode("utf-8")
 
