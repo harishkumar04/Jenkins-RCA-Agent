@@ -1,1 +1,68 @@
+Running Jenkins build #46
+@@RCA_STAGE_START@@ Setup RCA Agent Dependencies
+Requirement already satisfied: pip in ./.venv/lib/python3.14/site-packages (26.1.2)
+Requirement already satisfied: fastapi in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 1)) (0.136.3)
+Requirement already satisfied: uvicorn in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 2)) (0.48.0)
+Requirement already satisfied: sqlalchemy in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 3)) (2.0.50)
+Requirement already satisfied: pydantic in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 4)) (2.13.4)
+Requirement already satisfied: openai in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 5)) (2.38.0)
+Requirement already satisfied: python-dotenv in ./.venv/lib/python3.14/site-packages (from -r requirements.txt (line 6)) (1.2.2)
+Requirement already satisfied: starlette>=0.46.0 in ./.venv/lib/python3.14/site-packages (from fastapi->-r requirements.txt (line 1)) (1.2.1)
+Requirement already satisfied: typing-extensions>=4.8.0 in ./.venv/lib/python3.14/site-packages (from fastapi->-r requirements.txt (line 1)) (4.15.0)
+Requirement already satisfied: typing-inspection>=0.4.2 in ./.venv/lib/python3.14/site-packages (from fastapi->-r requirements.txt (line 1)) (0.4.2)
+Requirement already satisfied: annotated-doc>=0.0.2 in ./.venv/lib/python3.14/site-packages (from fastapi->-r requirements.txt (line 1)) (0.0.4)
+Requirement already satisfied: click>=7.0 in ./.venv/lib/python3.14/site-packages (from uvicorn->-r requirements.txt (line 2)) (8.4.1)
+Requirement already satisfied: h11>=0.8 in ./.venv/lib/python3.14/site-packages (from uvicorn->-r requirements.txt (line 2)) (0.16.0)
+Requirement already satisfied: annotated-types>=0.6.0 in ./.venv/lib/python3.14/site-packages (from pydantic->-r requirements.txt (line 4)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.46.4 in ./.venv/lib/python3.14/site-packages (from pydantic->-r requirements.txt (line 4)) (2.46.4)
+Requirement already satisfied: anyio<5,>=3.5.0 in ./.venv/lib/python3.14/site-packages (from openai->-r requirements.txt (line 5)) (4.13.0)
+Requirement already satisfied: distro<2,>=1.7.0 in ./.venv/lib/python3.14/site-packages (from openai->-r requirements.txt (line 5)) (1.9.0)
+Requirement already satisfied: httpx<1,>=0.23.0 in ./.venv/lib/python3.14/site-packages (from openai->-r requirements.txt (line 5)) (0.28.1)
+Requirement already satisfied: jiter<1,>=0.10.0 in ./.venv/lib/python3.14/site-packages (from openai->-r requirements.txt (line 5)) (0.15.0)
+Requirement already satisfied: sniffio in ./.venv/lib/python3.14/site-packages (from openai->-r requirements.txt (line 5)) (1.3.1)
+Requirement already satisfied: tqdm>4 in ./.venv/lib/python3.14/site-packages (from openai->-r requirements.txt (line 5)) (4.67.3)
+Requirement already satisfied: idna>=2.8 in ./.venv/lib/python3.14/site-packages (from anyio<5,>=3.5.0->openai->-r requirements.txt (line 5)) (3.17)
+Requirement already satisfied: certifi in ./.venv/lib/python3.14/site-packages (from httpx<1,>=0.23.0->openai->-r requirements.txt (line 5)) (2026.5.20)
+Requirement already satisfied: httpcore==1.* in ./.venv/lib/python3.14/site-packages (from httpx<1,>=0.23.0->openai->-r requirements.txt (line 5)) (1.0.9)
+@@RCA_STAGE_END@@ Setup RCA Agent Dependencies
+@@RCA_STAGE_START@@ Validate RCA Backend Code
+@@RCA_STAGE_END@@ Validate RCA Backend Code
+@@RCA_STAGE_START@@ Install Node App Dependencies
+/Users/harishkumarr/.nvm/versions/node/v22.17.0/bin/node
+/Users/harishkumarr/.nvm/versions/node/v22.17.0/bin/npm
+v22.17.0
+11.13.0
+/Users/harishkumarr/Desktop/justo-sample-app/node-postgres-app/app
+total 104
+drwxr-xr-x   8 harishkumarr  staff    256 May 29 15:09 .
+drwxr-xr-x   7 harishkumarr  staff    224 May 29 15:09 ..
+-rw-r--r--   1 harishkumarr  staff    185 May  6 10:57 Dockerfile
+-rw-r--r--   1 harishkumarr  staff    299 Apr 15 17:17 db.js
+-rw-r--r--   1 harishkumarr  staff    703 Apr 15 17:18 index.js
+drwxr-xr-x  83 harishkumarr  staff   2656 May 29 12:04 node_modules
+-rw-r--r--@  1 harishkumarr  staff  34766 Jun  3 15:30 package-lock.json
+-rw-r--r--@  1 harishkumarr  staff    364 May 29 12:05 package.json
 
+up to date, audited 81 packages in 899ms
+
+23 packages are looking for funding
+  run `npm fund` for details
+
+1 moderate severity vulnerability
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+@@RCA_STAGE_END@@ Install Node App Dependencies
+@@RCA_STAGE_START@@ Test Node App
+/Users/harishkumarr/.nvm/versions/node/v22.17.0/bin/npm
+
+> app@1.0.0 test
+> echo "Error: no test specified" && exit 0
+
+Error: no test specified
+@@RCA_STAGE_END@@ Test Node App
+@@RCA_STAGE_START@@ Build Docker Image
+/opt/homebrew/bin/docker
+ERROR: Error response from daemon: Docker Desktop is manually paused. Unpause it through the Whale menu or Dashboard.

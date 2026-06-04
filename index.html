@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI DevOps RCA Agent</title>
+    <title>AI DevOps RCA Agent - Value Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -89,7 +89,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-bottom: 16px;
         }
@@ -203,6 +203,40 @@
             line-height: 1.35;
         }
 
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #4b5563;
+        }
+
+        .meta-grid strong {
+            display: block;
+            color: #172033;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .insights {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .insight-row {
+            border: 1px solid #dfe5ef;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #ffffff;
+            font-size: 13px;
+        }
+
+        .insight-row span {
+            color: #637089;
+        }
+
         @media (max-width: 900px) {
             body {
                 padding: 16px;
@@ -220,7 +254,7 @@
 </head>
 
 <body>
-    <h1>AI DevOps RCA Agent</h1>
+    <h1>AI DevOps RCA Agent - Value Edition</h1>
 
     <div class="layout">
         <section class="panel">
@@ -257,9 +291,16 @@
                     <span>Medium</span>
                     <strong id="mediumCount">0</strong>
                 </div>
+                <div class="stat">
+                    <span>Recurring</span>
+                    <strong id="recurringCount">0</strong>
+                </div>
             </div>
 
             <section class="panel">
+                <h2>Operational Insights</h2>
+                <div id="insights" class="insights"></div>
+
                 <h2>Incident History</h2>
                 <div id="history" class="history"></div>
             </section>
@@ -344,6 +385,7 @@
                 const data = await response.text();
                 setResult(data);
                 loadIncidentHistory();
+                loadInsights();
             } catch (error) {
                 setResult("Error connecting to FastAPI backend");
             }
@@ -396,18 +438,57 @@
 
                 renderStats(incidents);
                 renderHistory(incidents);
+                loadInsights();
             } catch (error) {
                 document.getElementById("history").innerText = "Unable to load incidents";
             }
         }
 
         function renderStats(incidents) {
-            const high = incidents.filter((incident) => getSeverity(incident.analysis) === "high").length;
-            const medium = incidents.filter((incident) => getSeverity(incident.analysis) === "medium").length;
+            const high = incidents.filter((incident) => getIncidentSeverity(incident) === "high").length;
+            const medium = incidents.filter((incident) => getIncidentSeverity(incident) === "medium").length;
+            const recurring = incidents.filter((incident) => incident.recurring === "Yes" || Number(incident.recurrence_count || 1) > 1).length;
 
             document.getElementById("totalCount").innerText = incidents.length;
             document.getElementById("highCount").innerText = high;
             document.getElementById("mediumCount").innerText = medium;
+            document.getElementById("recurringCount").innerText = recurring;
+        }
+
+        async function loadInsights() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/insights`);
+                const insights = await response.json();
+                renderInsights(insights);
+            } catch (error) {
+                document.getElementById("insights").innerText = "Insights unavailable";
+            }
+        }
+
+        function renderInsights(insights) {
+            const target = document.getElementById("insights");
+            const topCategory = topEntry(insights.by_category);
+            const recurringCount = (insights.recurring || []).length;
+
+            target.innerHTML = `
+                <div class="insight-row"><span>Top failure category</span><strong>${topCategory}</strong></div>
+                <div class="insight-row"><span>Recurring patterns</span><strong>${recurringCount}</strong></div>
+            `;
+        }
+
+        function topEntry(values) {
+            const entries = Object.entries(values || {});
+
+            if (!entries.length) {
+                return "No data";
+            }
+
+            entries.sort((first, second) => second[1] - first[1]);
+            return `${entries[0][0]} (${entries[0][1]})`;
+        }
+
+        function getIncidentSeverity(incident) {
+            return (incident.severity || parseField(incident.analysis, "Severity") || "unknown").toLowerCase();
         }
 
         function renderHistory(incidents) {
@@ -420,10 +501,15 @@
             }
 
             incidents.forEach((incident) => {
-                const severity = getSeverity(incident.analysis);
-                const category = parseField(incident.analysis, "Category") || "Uncategorized";
-                const failureType = parseField(incident.analysis, "Failure Type") || "Unknown failure";
-                const rootCause = parseField(incident.analysis, "Root Cause") || incident.logs.slice(0, 110);
+                const severity = getIncidentSeverity(incident);
+                const category = incident.category || parseField(incident.analysis, "Category") || "Uncategorized";
+                const failureType = incident.failure_type || parseField(incident.analysis, "Failure Type") || "Unknown failure";
+                const rootCause = incident.root_cause || parseField(incident.analysis, "Root Cause") || incident.logs.slice(0, 110);
+                const recurring = incident.recurring || parseField(incident.analysis, "Recurring Incident") || "No";
+                const count = incident.recurrence_count || parseField(incident.analysis, "Similar Incident Count") || "1";
+                const recurrenceMemory = incident.recurrence_memory || parseField(incident.analysis, "Recurrence Memory") || "No previous matching incidents found.";
+                const resolutionPlaybook = incident.resolution_playbook || parseField(incident.analysis, "Resolution Playbook") || "No playbook generated.";
+                const buildUrl = incident.build_url || parseField(incident.analysis, "Build URL") || "";
 
                 const item = document.createElement("div");
                 item.className = "incident";
@@ -435,6 +521,12 @@
                     </div>
                     <div class="incident-title">${category} - ${failureType}</div>
                     <div class="incident-summary">${rootCause}</div>
+                    <div class="meta-grid">
+                        <div style="grid-column: 1 / -1;">Recurring<strong>${recurring} (${count})</strong></div>
+                        <div style="grid-column: 1 / -1;">Build URL<strong>${buildUrl ? `<a href="${buildUrl}" target="_blank">${buildUrl}</a>` : "Not provided"}</strong></div>
+                        <div style="grid-column: 1 / -1;">Memory<strong>${recurrenceMemory.replace(/\n/g, '<br>')}</strong></div>
+                        <div style="grid-column: 1 / -1;">Resolution Playbook<strong>${resolutionPlaybook.replace(/\n/g, '<br>')}</strong></div>
+                    </div>
                 `;
 
                 item.onclick = () => {
@@ -492,6 +584,7 @@ fatal: Could not read from remote repository.`;
         }
 
         loadIncidentHistory();
+        loadInsights();
     </script>
 </body>
 
